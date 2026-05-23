@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+require("dotenv").config();
 
 // Import your decoupled routes
 const apiRoutes = require('./routes');
@@ -17,7 +18,7 @@ app.use(bodyParser.json());
 //mongodb.net/?appName=AscendX") -> for the original database
 //mongodb.net/my_second_app_db?appName=AscendX") -> for the trial database
 
-mongoose.connect("mongodb+srv://riteshtry25_db_user:38cevRXMaE5OzlKx@ascendx.hfyxuls.mongodb.net/?appName=AscendX")
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
