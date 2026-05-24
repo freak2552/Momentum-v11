@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Award, Download, CheckCircle2, Activity, Calendar } from 'lucide-react';
-import { getStartOfWeek, formatDateKey, getColorClass, getBarColor, percentageToColor } from './utils';
+import { getStartOfWeek, formatDateKey, getColorClass, getBarColor, formatOrdinalDate } from './utils';
 import WeeklyLeagueWidget from './WeeklyLeagueWidget';
 
 export default function WeeklyReview({ logs, currentDate, routines, activeRoutineId, isDarkMode }) {
@@ -55,13 +55,50 @@ export default function WeeklyReview({ logs, currentDate, routines, activeRoutin
 
     const handleDownloadWeek = () => {
         if (!weeklyStats) return;
-        const content = `WEEKLY REPORT\n========================\nAverage Score: ${weeklyStats.average}%\nDays Logged: ${weeklyStats.completedDays}/7\n------------------------\nTask Performance:\n${weeklyStats.taskBreakdown.map(task => `${task.name}: ${task.average}%`).join("\n")}\n========================\nGenerated on: ${new Date().toLocaleString()}`;
-        const blob = new Blob([content], { type: "text/plain" });
+
+        let content = `WEEKLY MOMENTUM REPORT\n`;
+        content += `Week of: ${formatOrdinalDate(weekStart)}\n`;
+        content += `Weekly Score: ${weeklyStats.average}%\n`;
+        content += `Days Logged: ${weeklyStats.completedDays}/7\n`;
+        content += `===========================================\n\n`;
+
+        weekDays.forEach(day => {
+            const key = formatDateKey(day);
+            const log = logs[key];
+
+            if (log) {
+                // Formatting date to e.g., "Mon Feb 23 2026"
+                const dayStr = day.toDateString(); 
+                content += `[ ${dayStr} ]\n`;
+                content += `Score: ${log.percentage}%\n`;
+
+                if (log.tasks && log.tasks.length > 0) {
+                    log.tasks.forEach(t => {
+                        const completed = t.completed !== undefined ? t.completed : Math.round((t.progress / 100) * (t.weight || 10));
+                        const weight = t.weight || 10;
+                        
+                        let taskLine = ` - ${t.name}: ${completed}/${weight} mins`;
+                        
+                        // Only add stars if the task was rated
+                        if (t.satisfaction && t.satisfaction > 0) {
+                            taskLine += ` | ${t.satisfaction} Stars`;
+                        }
+                        
+                        content += taskLine + `\n`;
+                    });
+                }
+
+                // Add the daily remark or the fallback text
+                const remark = log.note && log.note.trim() !== '' ? log.note.trim() : "No extra data used";
+                content += `\nDaily Remark: ${remark}\n\n`;
+            }
+        });
+
+        const blob = new Blob([content.trim()], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        const today = new Date().toISOString().split("T")[0];
-        a.download = `momentum-report-${today}.txt`;
+        a.download = `momentum-report-week-of-${formatDateKey(weekStart)}.txt`;
         a.click();
         URL.revokeObjectURL(url);
     };

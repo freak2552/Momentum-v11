@@ -30,7 +30,8 @@ const Settings = mongoose.model('Settings', SettingsSchema);
 const JourneySchema = new mongoose.Schema({
   name: String,
   description: String,
-  entries: Array, // This will store our string logs and dates
+  type: { type: String, default: 'general' },
+  entries: Array, 
   createdAt: String
 });
 const Journey = mongoose.model('Journey', JourneySchema);

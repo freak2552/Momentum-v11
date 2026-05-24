@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ChevronDown, ChevronUp, Map } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp, Map, Compass, BookOpen, Zap, RotateCcw, Heart } from 'lucide-react';
 import { API_BASE_URL } from './utils';
 
 export default function Journey({ isDarkMode }) {
     const [journeys, setJourneys] = useState([]);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [newSubjectDesc, setNewSubjectDesc] = useState('');
+    const [newType, setNewType] = useState('general');
     const [entryInputs, setEntryInputs] = useState({});
     const [expandedJourneys, setExpandedJourneys] = useState({});
 
-    // Fetch journeys on load
+    // Define our journey types with associated icons and colors
+    const journeyTypes = [
+        { id: 'general', icon: Compass, color: 'text-slate-500', activeBg: 'bg-slate-500', activeText: 'text-white' },
+        { id: 'study', icon: BookOpen, color: 'text-blue-500', activeBg: 'bg-blue-500', activeText: 'text-white' },
+        { id: 'life', icon: Zap, color: 'text-amber-500', activeBg: 'bg-amber-500', activeText: 'text-white' },
+        { id: 'habit', icon: RotateCcw, color: 'text-purple-500', activeBg: 'bg-purple-500', activeText: 'text-white' },
+        { id: 'health', icon: Heart, color: 'text-rose-500', activeBg: 'bg-rose-500', activeText: 'text-white' }
+    ];
+
     useEffect(() => {
         fetch(`${API_BASE_URL}/journeys`)
             .then(res => res.json())
@@ -23,7 +32,11 @@ export default function Journey({ isDarkMode }) {
 
     const handleAddSubject = async () => {
         if (!newSubjectName.trim()) return;
-        const data = { name: newSubjectName.trim(), description: newSubjectDesc.trim() };
+        const data = { 
+            name: newSubjectName.trim(), 
+            description: newSubjectDesc.trim(),
+            type: newType
+        };
         try {
             const res = await fetch(`${API_BASE_URL}/journeys`, {
                 method: 'POST',
@@ -34,6 +47,7 @@ export default function Journey({ isDarkMode }) {
             setJourneys([...journeys, saved]);
             setNewSubjectName('');
             setNewSubjectDesc('');
+            setNewType('general');
         } catch (e) { console.error(e); }
     };
 
@@ -70,6 +84,12 @@ export default function Journey({ isDarkMode }) {
         } catch (e) { console.error(e); }
     };
 
+    const getIconForType = (typeId) => {
+        const match = journeyTypes.find(t => t.id === typeId) || journeyTypes[0];
+        const IconComponent = match.icon;
+        return <IconComponent className={`w-6 h-6 ${match.color}`} />;
+    };
+
     const cardBg = isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
     const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-500';
     const inputBg = isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500';
@@ -93,9 +113,33 @@ export default function Journey({ isDarkMode }) {
                         value={newSubjectDesc} onChange={e => setNewSubjectDesc(e.target.value)} 
                         className={`w-full p-3 rounded-xl border outline-none ${inputBg}`} 
                     />
-                    <button onClick={handleAddSubject} className="self-end px-6 py-3 font-bold text-white transition-colors bg-blue-600 rounded-xl hover:bg-blue-700">
-                        Create Subject
-                    </button>
+                    
+                    {/* Selectors and Button Row */}
+                    <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                            {journeyTypes.map((type) => {
+                                const IconComp = type.icon;
+                                const isSelected = newType === type.id;
+                                return (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => setNewType(type.id)}
+                                        title={type.id.charAt(0).toUpperCase() + type.id.slice(1)}
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-2 
+                                            ${isSelected 
+                                                ? `${type.activeBg} border-transparent shadow-md scale-110` 
+                                                : `border-transparent hover:border-slate-300 dark:hover:border-slate-600 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}`
+                                            }`}
+                                    >
+                                        <IconComp className={`w-5 h-5 ${isSelected ? type.activeText : type.color}`} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button onClick={handleAddSubject} className="px-6 py-3 font-bold text-white transition-colors bg-blue-600 rounded-xl hover:bg-blue-700">
+                            Create Subject
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -112,11 +156,17 @@ export default function Journey({ isDarkMode }) {
                         <div key={journey._id} className={`p-6 rounded-2xl border shadow-sm transition-all ${cardBg}`}>
                             {/* Header (Click to Expand) */}
                             <div className="flex items-center justify-between cursor-pointer group" onClick={() => toggleExpand(journey._id)}>
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-1.5 text-slate-400 group-hover:text-blue-500 transition-colors">
-                                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                <div className="flex items-start gap-4">
+                                    <div className="mt-1.5 flex items-center gap-3">
+                                        <div className="text-slate-400 group-hover:text-blue-500 transition-colors">
+                                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                        </div>
+                                        {/* Display the selected Icon */}
+                                        <div className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                                            {getIconForType(journey.type)}
+                                        </div>
                                     </div>
-                                    <div>
+                                    <div className="pt-1">
                                         <h3 className="text-xl font-black select-none">{journey.name}</h3>
                                         {journey.description && <p className={`text-sm mt-0.5 select-none ${textSecondary}`}>{journey.description}</p>}
                                     </div>
