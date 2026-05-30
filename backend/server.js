@@ -11,7 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --- Middleware ---
-app.use(cors());
+app.use(cors({
+  origin: "https://momentum-v11.vercel.app"
+}));
 app.use(bodyParser.json());
 
 // --- MongoDB Connection ---
@@ -23,7 +25,6 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // --- API Routes ---
-// This mounts all the routes from routes.js under the /api prefix
 app.use('/api', apiRoutes);
 
 // --- Start Server ---
