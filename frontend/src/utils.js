@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "https://momentum-v11.onrender.com/api";
 
 export const formatDateKey = (date) => {
     const year = date.getFullYear();
